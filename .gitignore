@@ -1,0 +1,20 @@
+# Ignore Python virtual environment
+.venv/
+
+# Ignore sensitive env vars
+.env
+
+# Ignore model files and logs
+models/
+__pycache__/
+*.pyc
+*.pkl
+*.joblib
+*.log
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+
+# Ignore EDA reports (optional)
+data/eda_report/

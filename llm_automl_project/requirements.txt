@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+pandas
+scikit-learn
+joblib
+sqlalchemy
+streamlit
+fairlearn
+langchain
+openai
