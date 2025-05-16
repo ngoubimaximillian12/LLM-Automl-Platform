@@ -3,51 +3,62 @@ import smtplib
 import streamlit as st
 from email.message import EmailMessage
 from dotenv import load_dotenv
+
+# 🔄 Load environment variables
 load_dotenv()
 
+# ✅ Email credentials from .env
+EMAIL_ADDRESS = os.getenv("SMTP_USER")
+EMAIL_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
 
-# Load secrets from .env or Streamlit secrets
-EMAIL_ADDRESS = os.getenv("EMAIL_SENDER") or st.secrets.get("EMAIL_SENDER")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets.get("EMAIL_PASSWORD")
+# 📄 Path to EDA report PDF
 EDA_PDF_PATH = "data/eda_report/eda_report.pdf"
+
 
 def send_eda_email(recipient: str) -> bool:
     """Send the EDA PDF report to the given recipient email."""
+    if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
+        st.error("❌ Email credentials not set. Please check your `.env` file.")
+        return False
+
     if not os.path.exists(EDA_PDF_PATH):
-        st.error("❌ EDA PDF not found. Run training first.")
+        st.error("❌ EDA report not found. Please train the model first.")
         return False
 
     try:
         msg = EmailMessage()
-        msg["Subject"] = "📊 Your EDA Report from LLM AutoML"
+        msg["Subject"] = "📊 Your EDA Report - LLM AutoML"
         msg["From"] = EMAIL_ADDRESS
         msg["To"] = recipient
-        msg.set_content("Hi,\n\nAttached is your EDA report. Happy modeling!\n\n- LLM AutoML Team")
+        msg.set_content(
+            "Hello,\n\nAttached is your EDA report generated using the LLM AutoML platform.\n\nBest regards,\nLLM AutoML Team"
+        )
 
-        # Attach PDF
         with open(EDA_PDF_PATH, "rb") as f:
-            pdf_data = f.read()
-            msg.add_attachment(pdf_data, maintype="application", subtype="pdf", filename="eda_report.pdf")
+            msg.add_attachment(f.read(), maintype="application", subtype="pdf", filename="eda_report.pdf")
 
-        # Send email via SMTP
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as smtp:
             smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             smtp.send_message(msg)
 
         return True
+
     except Exception as e:
         st.error(f"❌ Failed to send email: {e}")
         return False
 
-# Streamlit UI to send report
+
 def email_eda_ui():
-    st.subheader("📤 Send EDA Report via Email")
-    recipient = st.text_input("Recipient Email Address")
-    if st.button("📧 Send Report"):
-        if recipient:
-            with st.spinner("Sending EDA report..."):
-                success = send_eda_email(recipient)
-                if success:
-                    st.success("✅ EDA report sent successfully.")
-        else:
-            st.warning("⚠️ Please enter a valid email address.")
+    """Streamlit UI to collect email and send EDA PDF."""
+    with st.expander("📤 Send EDA Report via Email"):
+        recipient = st.text_input("Recipient Email")
+        if st.button("📨 Send Report"):
+            if recipient:
+                with st.spinner("Sending report..."):
+                    success = send_eda_email(recipient)
+                    if success:
+                        st.success("✅ Report sent successfully.")
+            else:
+                st.warning("⚠️ Please enter a valid email address.")
