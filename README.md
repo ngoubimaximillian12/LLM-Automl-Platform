@@ -1,61 +1,66 @@
-
 # 🤖 LLM-Powered AutoML Platform with Bias Auditing & Feedback Learning
 
 A full-stack intelligent machine learning platform that:
-- Automates end-to-end model building
-- Provides real-time bias and fairness auditing
-- Uses LLMs (GPT/DeepSeek) for reasoning, feedback interpretation, and code generation
-- Supports continuous learning and explanation through a conversational interface
+
+- Automates end-to-end model building  
+- Provides real-time bias and fairness auditing  
+- Uses LLMs (GPT/DeepSeek) for reasoning, feedback interpretation, and code generation  
+- Supports continuous learning and explainability through a conversational interface  
 
 ---
 
 ## 🔍 Motivation
 
-Machine learning is powerful, but often inaccessible due to complexity. This project aims to democratize ML by enabling non-experts to build and monitor ethical models with minimal coding. It integrates a fine-tuned LLM, fairness auditing, and automatic feedback-driven retraining.
+Machine learning is powerful but often inaccessible due to its complexity. This project aims to **democratize ML** by enabling non-experts to build and monitor **ethical models** with minimal coding. It integrates a fine-tuned LLM, fairness auditing, and feedback-driven retraining.
 
 ---
 
 ## 🎯 Key Features
 
-| Feature                            | Description                                                                 |
-|-----------------------------------|-----------------------------------------------------------------------------|
-| **AutoML Engine**                 | Upload → Train → Save ML model (with EDA + evaluation)                     |
-| **LLM Reasoning Assistant**       | Explains ML logic, bias results, generates preprocessing code              |
-| **Bias Auditor**                  | Audits fairness using metrics like SPD, EOD, Disparate Impact              |
-| **Fallback LLM (DeepSeek/GPT-4)** | Handles reasoning if backend fails or needs enhancement                    |
-| **Auto-Retraining**               | Triggers retraining via feedback or accuracy/bias thresholds               |
-| **EDA PDF + Email**               | Generates and sends PDF reports via email                                  |
-| **Feedback Loop**                 | Stores user correction → retrain pipeline automatically                    |
-| **Streamlit UI**                  | Intuitive interface to train models, see results, inject code, and explore |
-| **Dockerized Setup**             | Backend, frontend, and PostgreSQL launched in one command                  |
+| Feature                    | Description                                                                 |
+|----------------------------|-----------------------------------------------------------------------------|
+| **AutoML Engine**          | Upload → Train → Save ML model (with EDA + evaluation)                      |
+| **LLM Reasoning Assistant**| Explains ML logic, bias results, generates preprocessing code                |
+| **Bias Auditor**           | Audits fairness using SPD, EOD, DIR, AOD                                    |
+| **Fallback LLM**           | DeepSeek or GPT-4 handles reasoning if backend fails or is limited          |
+| **Auto-Retraining**        | Triggers retraining via feedback or bias/accuracy thresholds                |
+| **EDA PDF + Email**        | Generates and sends PDF reports via email                                   |
+| **Feedback Loop**          | Stores user correction → triggers automatic retraining                      |
+| **Streamlit UI**           | Intuitive interface to train models, explore results, and interact with LLM |
+| **Dockerized Setup**       | One-command launch for backend, frontend, and PostgreSQL                    |
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Streamlit
-- **Backend:** FastAPI
-- **LLMs:** Hugging Face Transformers (GPT-2 / DeepSeek fallback)
-- **Bias Tools:** `fairlearn`, `aif360`
-- **Storage:** PostgreSQL
-- **Deployment:** Docker & Docker Compose
+- **Frontend**: Streamlit  
+- **Backend**: FastAPI  
+- **LLMs**: Hugging Face Transformers (GPT-2), DeepSeek (fallback)  
+- **Bias Tools**: `fairlearn`, `aif360`  
+- **Database**: PostgreSQL  
+- **Deployment**: Docker & Docker Compose  
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Clone this repo
+### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/ngoubimaximillian12/llm-automl-platform.git
 cd llm-automl-platform
-2. Create .env file (optional but recommended)
+2. Configure Environment Variables
+Create a .env file:
+
 ini
 Copy
 Edit
 DEEPSEEK_API_KEY=your_api_key
 EMAIL_USER=your_email@example.com
 EMAIL_PASS=your_password
-3. Run the entire platform (with Docker)
+3. Run the Platform
+With Docker:
+
 bash
 Copy
 Edit
@@ -71,42 +76,39 @@ uvicorn backend.app:app --reload
 # Terminal 2 - Frontend
 streamlit run frontend/app.py
 🧪 How to Use
-➕ Upload Data
-Upload a .csv dataset using the Streamlit UI.
+➕ Upload Data: Use the Streamlit UI to upload your CSV dataset
 
-🧠 Train Model
-Click Train Model + Generate EDA. This will:
+🧠 Train Model: Click "Train Model + Generate EDA"
 
-Preprocess data
+Preprocesses data
 
-Train model (RandomForest by default)
+Trains (RandomForest by default)
 
-Generate EDA charts and a downloadable PDF
+Generates downloadable EDA PDF
 
-👁️ View Bias Audit
-See bias metrics after training. Use LLM to explain them using plain language.
+👁️ View Bias Audit: View fairness metrics; use LLM to explain bias results
 
-✍️ Feedback & Retraining
-Submit corrections if predictions are wrong. Retraining is automatic once threshold is met.
+✍️ Provide Feedback: Submit corrections if predictions are incorrect
 
-📬 Email Report
-Send EDA report via email using a form.
+Retraining is triggered once feedback threshold is reached
 
-📈 Bias Metrics Used
-Statistical Parity Difference (SPD)
+📬 Send Email Report: Generate and send the EDA report to any email address
 
-Equal Opportunity Difference (EOD)
+📈 Bias Metrics
+SPD – Statistical Parity Difference
 
-Disparate Impact Ratio (DIR)
+EOD – Equal Opportunity Difference
 
-Average Odds Difference (AOD)
+DIR – Disparate Impact Ratio
 
-🧠 LLM Usage
-Task	LLM Role
-Bias explanation	Natural language explanation
-Preprocessing suggestions	Generates code for missing values, scaling, encoding, etc.
-Model selection & retraining logic	Suggests best model based on data structure
-Fallback when backend fails	DeepSeek API as last resort
+AOD – Average Odds Difference
+
+🧠 LLM Roles
+Task	LLM Functionality
+Bias explanation	Translates metrics to natural language
+Preprocessing suggestions	Generates code for missing values, encoding, etc.
+Model selection logic	Suggests models based on dataset characteristics
+Backend fallback	DeepSeek handles logic if internal LLM fails
 
 📦 File Structure
 bash
@@ -135,40 +137,44 @@ llm_automl_project/
 ├── requirements.txt
 └── .env
 📚 Research Basis
-This project was developed in alignment with the MSc dissertation titled:
+This project supports the MSc dissertation:
 
 "LLM-Powered Automated Machine Learning Platform with Integrated Bias and Fairness Auditing"
 
-It incorporates state-of-the-art research in:
+Built on:
 
-AutoML (AutoSklearn, H2O.ai)
+AutoML: AutoSklearn, H2O.ai
 
-Fairness tools (Fairlearn, AIF360)
+Fairness Tools: AIF360, Fairlearn
 
-Instruction-tuned LLMs (QLoRA, Mistral, DeepSeek)
+Instruction-tuned LLMs: QLoRA, Mistral, DeepSeek
 
 ✅ Completed Functionality Checklist
 ✅ AutoML pipeline
-✅ Bias audit & explanation
-✅ LLM fallback + code generation
-✅ Auto-retraining via feedback
-✅ Email delivery of EDA
-✅ Streamlit dashboard for history
-✅ Docker deployment
-✅ Feedback database & active learning
 
-🧠 Future Additions
-Model comparison visualizer (side-by-side performance)
+✅ Bias audit & LLM explanation
 
-Support for multi-class bias metrics
+✅ Code generation via LLM fallback
 
-Real-time Slack/Discord alerts on retrain or drift
+✅ Feedback loop & auto-retraining
 
-Hugging Face Space deployment
+✅ EDA PDF with email delivery
+
+✅ Streamlit dashboard
+
+✅ Dockerized setup
+
+✅ Active learning via feedback database
+
+🚧 Future Additions
+📊 Model comparison visualizer
+
+📚 Multi-class bias metrics
+
+📡 Real-time alerts via Slack/Discord
+
+🌍 Hugging Face Space deployment
 
 📜 License
 MIT © 2025 Ngoubi Maximillian Diamgha
 
-yaml
-Copy
-Edit
