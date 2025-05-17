@@ -3,6 +3,7 @@ import sys
 import shutil
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 # 🔧 Fix path for backend imports
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -18,21 +19,28 @@ from backend.eda_generator import generate_eda_report, export_eda_to_pdf
 from backend.retrain import retrain_from_feedback
 from backend.background_tasks import schedule_daily_monitoring
 
+# ✅ Ensure 'data/' directory exists
+DATA_DIR = os.path.abspath("data")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# ✅ New FastAPI lifespan event
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    tasks = BackgroundTasks()
+    schedule_daily_monitoring(tasks)
+    yield  # Optional cleanup can go here in the future
+
 # ✅ Initialize FastAPI app
-app = FastAPI(title="LLM AutoML Backend API")
+app = FastAPI(title="LLM AutoML Backend API", lifespan=lifespan)
 
 # ✅ Allow frontend (Streamlit) to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Optional: use specific origins like ["http://localhost:8501"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ✅ Ensure 'data/' directory exists
-DATA_DIR = os.path.abspath("data")
-os.makedirs(DATA_DIR, exist_ok=True)
 
 # 🗂️ Upload dataset
 @app.post("/upload-data/")
@@ -95,9 +103,3 @@ def retrain_model():
         return {"retrain_status": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retraining failed: {str(e)}")
-
-# 🔂 Background auto-retraining on startup
-@app.on_event("startup")
-def start_background_monitoring():
-    tasks = BackgroundTasks()
-    schedule_daily_monitoring(tasks)

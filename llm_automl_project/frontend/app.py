@@ -3,59 +3,41 @@ import sys
 import pandas as pd
 import streamlit as st
 import requests
-from PIL import Image
 
-# ✅ Ensure backend directory is in Python path
+# ✅ Backend path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "backend"))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-# ✅ Import backend fallback logic and utils
+# ✅ Imports
 try:
     from llm_generator import deepseek_fallback
     from eda_email import send_eda_email
     from fairness_charts import plot_fairness_metrics
-    from data_preview_tab import show_data_preview  # <-- this must exist
+    from data_preview_tab import show_data_preview
 except ImportError as e:
     st.error(f"❌ Import failed: {e}")
     deepseek_fallback = None
 
-# 📁 Constants
+# ✅ App constants
 EDA_DIR = "data/eda_report"
 BACKEND_URL = "http://127.0.0.1:8000"
 
-# ----------------------------- 📊 EDA Chart Viewer -----------------------------
-def show_eda_images():
-    st.subheader("📊 Exploratory Data Analysis Report")
-    if not os.path.exists(EDA_DIR):
-        st.warning("⚠️ EDA report not found. Please train a model first.")
-        return
-    for img_file in sorted(os.listdir(EDA_DIR)):
-        if img_file.endswith(".png"):
-            st.image(os.path.join(EDA_DIR, img_file), caption=img_file, use_column_width=True)
-
-# ----------------------------- 📈 Show Fairness Chart -----------------------------
-def show_fairness_chart():
-    metrics = {
-        "Statistical Parity": 0.18,
-        "Equal Opportunity": -0.12,
-        "Disparate Impact": 0.75
-    }
-    path = plot_fairness_metrics(metrics)
-    st.image(path, caption="📊 Fairness Metrics")
-
-# ----------------------------- Streamlit UI -----------------------------
+# ✅ Streamlit setup
 st.set_page_config(page_title="LLM AutoML", layout="wide")
 st.title("🤖 LLM AutoML Platform")
 
-tabs = st.tabs(["📁 Upload", "📈 Fairness", "📤 Email EDA", "🧠 Fallback", "📋 Preview"])
+tabs = st.tabs([
+    "📁 Upload", "📈 Fairness", "📤 Email EDA", "🧠 Fallback",
+    "📋 Preview", "🧹 NLP Cleaner"
+])
 
-# ==========================
-# Tab 0: Upload + Train + EDA
-# ==========================
+# -------------------------
+# Tab 0: Upload & Train
+# -------------------------
 with tabs[0]:
-    uploaded_file = st.file_uploader("Upload your dataset (CSV, XLSX, JSON, Parquet)", type=["csv", "xlsx", "json", "parquet"])
+    uploaded_file = st.file_uploader("Upload your dataset", type=["csv", "xlsx", "json", "parquet"])
     df_preview = None
 
     if uploaded_file:
@@ -64,7 +46,6 @@ with tabs[0]:
         with open(file_path, "wb") as f:
             f.write(uploaded_file.read())
 
-        # Auto-load preview based on type
         try:
             if uploaded_file.name.endswith(".csv"):
                 df_preview = pd.read_csv(file_path)
@@ -74,85 +55,99 @@ with tabs[0]:
                 df_preview = pd.read_json(file_path)
             elif uploaded_file.name.endswith(".parquet"):
                 df_preview = pd.read_parquet(file_path)
-            st.success(f"✅ File '{uploaded_file.name}' uploaded successfully.")
+            st.success(f"✅ File '{uploaded_file.name}' uploaded.")
             st.dataframe(df_preview.head(100))
         except Exception as e:
             st.error(f"❌ Error reading file: {e}")
 
         if st.button("🚀 Train Model + Generate EDA"):
-            with st.spinner("Training and analyzing..."):
+            with st.spinner("Analyzing & training..."):
                 try:
-                    response = requests.post(
+                    res = requests.post(
                         f"{BACKEND_URL}/train-model/",
                         params={"file_name": uploaded_file.name},
                         timeout=60
                     )
-                    if response.status_code == 200:
-                        st.success("✅ Training & EDA complete.")
-                        st.json(response.json())
-                        show_eda_images()
+                    if res.status_code == 200:
+                        st.success("✅ Model & EDA ready.")
+                        st.json(res.json())
+                        if os.path.exists(EDA_DIR):
+                            for img in os.listdir(EDA_DIR):
+                                if img.endswith(".png"):
+                                    st.image(os.path.join(EDA_DIR, img), use_column_width=True)
                     else:
-                        st.error(f"❌ Backend error {response.status_code}: {response.text}")
+                        st.error(f"❌ Backend error {res.status_code}: {res.text}")
                 except requests.exceptions.ConnectionError:
-                    st.warning("⚠️ Backend not available. Trying fallback...")
+                    st.warning("⚠️ Backend not reachable. Using LLM fallback...")
                     if deepseek_fallback:
                         with open(file_path, "r") as f:
-                            csv_head = f.read(3000)
+                            head = f.read(3000)
                         try:
-                            llm_response = deepseek_fallback(f"Analyze this:\n{csv_head}")
-                            st.success("✅ LLM Fallback:")
-                            st.markdown(llm_response)
+                            reply = deepseek_fallback(f"Analyze this dataset:\n{head}")
+                            st.markdown(reply)
                         except Exception as e:
                             st.error(f"❌ LLM Fallback failed: {e}")
                     else:
-                        st.error("⚠️ Fallback unavailable.")
+                        st.error("❌ Fallback not available.")
                 except Exception as e:
                     st.error(f"❌ Unexpected error: {e}")
 
-# ==========================
-# Tab 1: Fairness
-# ==========================
+# -------------------------
+# Tab 1: Fairness Chart
+# -------------------------
 with tabs[1]:
     st.header("📊 Fairness Visualizer")
-    show_fairness_chart()
+    path = plot_fairness_metrics({
+        "Statistical Parity": 0.18,
+        "Equal Opportunity": -0.12,
+        "Disparate Impact": 0.75
+    })
+    st.image(path, caption="Fairness Metrics")
 
-# ==========================
-# Tab 2: Email EDA PDF
-# ==========================
+# -------------------------
+# Tab 2: Email EDA
+# -------------------------
 with tabs[2]:
-    st.header("📤 Send EDA Report via Email")
-    email = st.text_input("Enter recipient email:")
-    if st.button("📨 Send EDA PDF"):
+    st.header("📤 Send EDA Report")
+    email = st.text_input("Recipient email:")
+    if st.button("📨 Send PDF"):
         try:
-            result = send_eda_email(email)
-            if result:
-                st.success(f"✅ EDA report sent to {email}")
+            if send_eda_email(email):
+                st.success(f"✅ Sent to {email}")
             else:
                 st.error("❌ Email failed.")
         except Exception as e:
-            st.error(f"❌ Failed to send email: {e}")
+            st.error(f"❌ Email error: {e}")
 
-# ==========================
-# Tab 3: LLM Assistant
-# ==========================
+# -------------------------
+# Tab 3: LLM Fallback Chat
+# -------------------------
 with tabs[3]:
-    st.header("🧠 Ask LLM (DeepSeek Fallback)")
-    prompt = st.text_area("Ask something about your ML task:")
-    if st.button("🧠 Submit to DeepSeek"):
+    st.header("🧠 Ask DeepSeek (LLM)")
+    prompt = st.text_area("Ask anything:")
+    if st.button("💬 Get Answer"):
         if deepseek_fallback:
-            st.info("⌛ Waiting for DeepSeek...")
             try:
-                reply = deepseek_fallback(prompt)
-                st.success("✅ Response:")
-                st.markdown(reply)
+                answer = deepseek_fallback(prompt)
+                st.markdown(answer)
             except Exception as e:
-                st.error(f"❌ Failed to get DeepSeek response: {e}")
+                st.error(f"❌ Error: {e}")
         else:
-            st.warning("⚠️ DeepSeek not configured.")
+            st.warning("LLM not set up.")
 
-# ==========================
+# -------------------------
 # Tab 4: Data Preview
-# ==========================
+# -------------------------
 with tabs[4]:
-    st.header("📋 Data Preview & Auto Insights")
+    st.header("📋 Data Preview & Insights")
     show_data_preview()
+
+# -------------------------
+# Tab 5: NLP Cleaner & Profiler
+# -------------------------
+with tabs[5]:
+    try:
+        from nlp_cleaner_tab import run_nlp_cleaner
+        run_nlp_cleaner()
+    except ImportError as e:
+        st.error(f"❌ Could not load NLP cleaner: {e}")
