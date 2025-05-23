@@ -1,31 +1,41 @@
+# ✅ 1. Streamlit setup MUST be first
+import streamlit as st
+st.set_page_config(page_title="LLM AutoML", layout="wide")
+
+# ✅ 2. Standard imports
 import os
 import sys
 import pandas as pd
-import streamlit as st
 import requests
 
-# ✅ Backend path
+# ✅ 3. Setup backend path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "backend"))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-# ✅ Imports
+# ✅ 4. Try imports (without calling any Streamlit commands)
+deepseek_fallback = None
+import_error = None
+
 try:
     from llm_generator import deepseek_fallback
     from eda_email import send_eda_email
     from fairness_charts import plot_fairness_metrics
     from data_preview_tab import show_data_preview
+    from nlp_cleaner_tab import run_nlp_cleaner_tab
 except ImportError as e:
-    st.error(f"❌ Import failed: {e}")
-    deepseek_fallback = None
+    import_error = f"❌ Import failed: {e}"
 
-# ✅ App constants
+# ✅ 5. Show import error now that it's safe
+if import_error:
+    st.error(import_error)
+
+# ✅ 6. Constants
 EDA_DIR = "data/eda_report"
 BACKEND_URL = "http://127.0.0.1:8000"
 
-# ✅ Streamlit setup
-st.set_page_config(page_title="LLM AutoML", layout="wide")
+# ✅ 7. App Title
 st.title("🤖 LLM AutoML Platform")
 
 tabs = st.tabs([
@@ -146,8 +156,4 @@ with tabs[4]:
 # Tab 5: NLP Cleaner & Profiler
 # -------------------------
 with tabs[5]:
-    try:
-        from nlp_cleaner_tab import run_nlp_cleaner
-        run_nlp_cleaner()
-    except ImportError as e:
-        st.error(f"❌ Could not load NLP cleaner: {e}")
+    run_nlp_cleaner_tab()

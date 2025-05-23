@@ -7,17 +7,19 @@ import matplotlib.pyplot as plt
 import re
 from transformers import pipeline
 from nltk.tokenize import sent_tokenize
-from profanity_check import predict
+from better_profanity import profanity
 from langdetect import detect
-from scipy.stats import kurtosis, skew
+from scipy.stats import entropy, kurtosis, skew
 from sklearn.impute import SimpleImputer
+
+# ✅ Load profanity words once
+profanity.load_censor_words()
 
 # ✅ Optional LLM fallback
 try:
     from backend.llm_generator import deepseek_fallback
 except:
     deepseek_fallback = None
-
 
 def run_nlp_cleaner_tab():
     st.subheader("🧹 NLP Data Cleaner, Profiler, and Validator")
@@ -38,6 +40,9 @@ def run_nlp_cleaner_tab():
         df = pd.read_excel(os.path.join(DATA_DIR, selected_file))
     elif selected_file.endswith(".json"):
         df = pd.read_json(os.path.join(DATA_DIR, selected_file))
+    else:
+        st.error("Unsupported file format.")
+        return
 
     text_cols = df.select_dtypes(include="object").columns.tolist()
     num_cols = df.select_dtypes(include='number').columns.tolist()
@@ -55,10 +60,7 @@ def run_nlp_cleaner_tab():
     if num_cols:
         st.markdown("### 📈 Skewness & Kurtosis")
         st.json({
-            col: {
-                "skewness": float(skew(df[col].dropna())),
-                "kurtosis": float(kurtosis(df[col].dropna()))
-            }
+            col: {"skewness": float(skew(df[col].dropna())), "kurtosis": float(kurtosis(df[col].dropna()))}
             for col in num_cols if df[col].nunique() > 1
         })
 
@@ -96,7 +98,8 @@ def run_nlp_cleaner_tab():
         cleaned_texts = []
         errors = []
 
-        def detect_offensive(text): return bool(predict([text])[0])
+        def detect_offensive(text):
+            return profanity.contains_profanity(text)
 
         def correct_grammar(text):
             if deepseek_fallback:
@@ -106,7 +109,8 @@ def run_nlp_cleaner_tab():
                     return text
             return text
 
-        def clean_entities(text): return re.sub(r"\b(Mr\.|Mrs\.|Dr\.|Prof\.|Sir)\s\w+", "<NAME>", text)
+        def clean_entities(text):
+            return re.sub(r"\b(Mr\.|Mrs\.|Dr\.|Prof\.|Sir)\s\w+", "<NAME>", text)
 
         limit = st.slider("Rows to clean", 1, min(500, len(df)), 10)
 
@@ -132,11 +136,7 @@ def run_nlp_cleaner_tab():
                 "Entity Tags Rewritten": limit,
             })
 
-            st.download_button(
-                "⬇️ Download Cleaned CSV",
-                df_cleaned.to_csv(index=False),
-                file_name="cleaned_data.csv",
-                mime="text/csv"
-            )
+            st.download_button("⬇️ Download Cleaned CSV", df_cleaned.to_csv(index=False),
+                               file_name="cleaned_data.csv", mime="text/csv")
     else:
         st.warning("⚠️ No text columns found for NLP cleaning.")

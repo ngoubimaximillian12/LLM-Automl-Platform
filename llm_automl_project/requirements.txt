@@ -1,3 +1,4 @@
+python-dotenv
 fastapi
 uvicorn
 pydantic
@@ -9,3 +10,7 @@ streamlit
 fairlearn
 langchain
 openai
+streamlit
+pandas
+requests
+python-dotenv
