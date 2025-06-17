@@ -5,44 +5,37 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-# 🔧 Fix path for backend imports
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# ✅ Local modules
-from backend.model_pipeline import train_and_save_model
-from backend.predict import predict, save_prediction_feedback
-from backend.utils import load_dataset
-from backend.eda_generator import generate_eda_report, export_eda_to_pdf
-from backend.retrain import retrain_from_feedback
-from backend.background_tasks import schedule_daily_monitoring
+from model_pipeline import train_and_save_model
+from predict import predict, save_prediction_feedback
+from utils import load_dataset
+from eda_generator import generate_eda_report, export_eda_to_pdf
+from retrain import retrain_from_feedback
+from background_tasks import schedule_daily_monitoring
 
-# ✅ Ensure 'data/' directory exists
 DATA_DIR = os.path.abspath("data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# ✅ New FastAPI lifespan event
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     tasks = BackgroundTasks()
     schedule_daily_monitoring(tasks)
-    yield  # Optional cleanup can go here in the future
+    yield
 
-# ✅ Initialize FastAPI app
 app = FastAPI(title="LLM AutoML Backend API", lifespan=lifespan)
 
-# ✅ Allow frontend (Streamlit) to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Adjust for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🗂️ Upload dataset
 @app.post("/upload-data/")
 async def upload_data(file: UploadFile = File(...)):
     file_path = os.path.join(DATA_DIR, file.filename)
@@ -53,7 +46,6 @@ async def upload_data(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-# 🧠 Train model and generate EDA
 @app.post("/train-model/")
 def train_model(file_name: str):
     dataset_path = os.path.join(DATA_DIR, file_name)
@@ -71,7 +63,6 @@ def train_model(file_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
 
-# 🔮 Predict with uploaded input
 @app.post("/predict/")
 def make_prediction(model_name: str, input_data: dict):
     try:
@@ -81,7 +72,6 @@ def make_prediction(model_name: str, input_data: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
-# 📝 Save feedback on prediction
 @app.post("/predict/feedback/")
 def submit_feedback(model_name: str, input_data: dict, correct_label: str):
     try:
@@ -95,7 +85,6 @@ def submit_feedback(model_name: str, input_data: dict, correct_label: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Feedback submission failed: {str(e)}")
 
-# 🔁 Retrain model using feedback
 @app.post("/retrain/")
 def retrain_model():
     try:

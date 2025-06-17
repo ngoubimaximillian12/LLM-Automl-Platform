@@ -1,2 +1,13 @@
-python-dotenv
-python-dotenv
+fastapi
+uvicorn
+pandas
+scikit-learn
+numpy
+requests
+python-multipart
+aiofiles
+fastapi
+uvicorn
+pandas
+scikit-learn
+sqlalchemy

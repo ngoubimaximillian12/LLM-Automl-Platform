@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    ports:
+      - "5433:5432"  # host port 5433 to avoid conflict
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hope
+      POSTGRES_DB: recommender_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./llm_automl_project/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./llm_automl_project/backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./llm_automl_project/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./llm_automl_project/frontend:/app
+    environment:
+      - IN_DOCKER=1   # <-- Added environment variable here
+    depends_on:
+      - backend
+
+volumes:
+  pgdata: {}

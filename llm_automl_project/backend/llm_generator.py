@@ -37,7 +37,7 @@ def deepseek_fallback(task: str) -> str:
             "https://api.deepseek.com/v1/chat/completions",
             headers=headers,
             json=payload,
-            timeout=60  # ⏱️ Increased timeout to 60 seconds
+            timeout=90  # ⏱️ Increased timeout to 60 seconds
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]

@@ -14,3 +14,15 @@ streamlit
 pandas
 requests
 python-dotenv
+fastapi
+uvicorn
+pandas
+scikit-learn
+sqlalchemy
+fastapi
+uvicorn
+pandas
+scikit-learn
+sqlalchemy
+python-dotenv
+
