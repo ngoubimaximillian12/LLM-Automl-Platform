@@ -1,0 +1,2 @@
+[phases.start]
+command = "streamlit run llm_automl_project/frontend/app.py --server.port $PORT"
