@@ -13,7 +13,6 @@ try:
 except ImportError:
     deepseek_fallback = None
 
-
 def run_nlp_cleaner_tab():
     st.subheader("🧹 NLP Data Cleaner, Profiler, and Validator")
 
@@ -30,16 +29,24 @@ def run_nlp_cleaner_tab():
 
     selected_file = st.selectbox("Choose a file", files)
 
-    # Load data
+    # Load data safely
     file_path = os.path.join(DATA_DIR, selected_file)
-    if selected_file.endswith(".csv"):
-        df = pd.read_csv(file_path)
-    elif selected_file.endswith(".xlsx"):
-        df = pd.read_excel(file_path)
-    elif selected_file.endswith(".json"):
-        df = pd.read_json(file_path)
-    else:
-        st.error("Unsupported file format.")
+    try:
+        if selected_file.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif selected_file.endswith(".xlsx"):
+            df = pd.read_excel(file_path)
+        elif selected_file.endswith(".json"):
+            df = pd.read_json(file_path)
+        else:
+            st.error("Unsupported file format.")
+            return
+    except Exception as e:
+        st.error(f"Error loading file: {e}")
+        return
+
+    if df.empty:
+        st.warning("Dataset is empty.")
         return
 
     text_cols = df.select_dtypes(include="object").columns.tolist()
@@ -58,7 +65,10 @@ def run_nlp_cleaner_tab():
     if num_cols:
         st.markdown("### 📈 Skewness & Kurtosis")
         st.json({
-            col: {"skewness": float(skew(df[col].dropna())), "kurtosis": float(kurtosis(df[col].dropna()))}
+            col: {
+                "skewness": float(skew(df[col].dropna())),
+                "kurtosis": float(kurtosis(df[col].dropna()))
+            }
             for col in num_cols if df[col].nunique() > 1
         })
 
@@ -92,27 +102,28 @@ def run_nlp_cleaner_tab():
         st.markdown("## ✨ Text Column Cleaner")
         col = st.selectbox("Text column to clean", text_cols)
 
-        df_cleaned = df.copy()
-        cleaned_texts = []
-        errors = []
-
-        def detect_offensive(text):
-            return profanity.contains_profanity(text)
-
-        def correct_grammar(text):
-            if deepseek_fallback:
-                try:
-                    return deepseek_fallback(f"Fix grammar and fluency:\n{text}")
-                except:
-                    return text
-            return text
-
-        def clean_entities(text):
-            return re.sub(r"\b(Mr\.|Mrs\.|Dr\.|Prof\.|Sir)\s\w+", "<NAME>", text)
-
-        limit = st.slider("Rows to clean", 1, min(500, len(df)), 10)
+        max_rows = min(500, len(df)) if len(df) > 0 else 1
+        limit = st.slider("Rows to clean", 1, max_rows, 10)
 
         if st.button("🚀 Run Cleaning"):
+            df_cleaned = df.copy()
+            cleaned_texts = []
+            errors = []
+
+            def detect_offensive(text):
+                return profanity.contains_profanity(text)
+
+            def correct_grammar(text):
+                if deepseek_fallback:
+                    try:
+                        return deepseek_fallback(f"Fix grammar and fluency:\n{text}")
+                    except:
+                        return text
+                return text
+
+            def clean_entities(text):
+                return re.sub(r"\b(Mr\.|Mrs\.|Dr\.|Prof\.|Sir)\s\w+", "<NAME>", text)
+
             progress = st.progress(0)
             for i, row in df.head(limit).iterrows():
                 text = str(row[col])

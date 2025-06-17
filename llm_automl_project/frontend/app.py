@@ -1,23 +1,26 @@
-import streamlit as st
-st.set_page_config(page_title="LLM AutoML", layout="wide")
-
 import os
 import sys
+import streamlit as st
 import pandas as pd
 import requests
 
-# Detect if running inside Docker (optional, e.g. by env var)
-IN_DOCKER = os.getenv("IN_DOCKER", "0") == "1"
+# 1. Set Streamlit page config first!
+st.set_page_config(page_title="LLM AutoML", layout="wide")
 
-# Backend URL - switch based on environment
-BACKEND_URL = "http://backend:8000" if IN_DOCKER else "http://127.0.0.1:8000"
+# 2. Import the NLP cleaner tab function
+from nlp_cleaner_tab import run_nlp_cleaner_tab
 
-# Setup backend path (optional, for local imports)
+# 3. Setup backend path for imports if needed
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 BACKEND_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "backend"))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
+# 4. Detect if running inside Docker (optional)
+IN_DOCKER = os.getenv("IN_DOCKER", "0") == "1"
+BACKEND_URL = "http://backend:8000" if IN_DOCKER else "http://127.0.0.1:8000"
+
+# 5. Attempt to import other backend modules, with fallback error reporting
 deepseek_fallback = None
 import_error = None
 try:
@@ -25,7 +28,6 @@ try:
     from eda_email import send_eda_email
     from fairness_charts import plot_fairness_metrics
     from data_preview_tab import show_data_preview
-    from nlp_cleaner_tab import run_nlp_cleaner_tab
 except ImportError as e:
     import_error = f"❌ Import failed: {e}"
 
@@ -34,14 +36,16 @@ if import_error:
 
 EDA_DIR = "data/eda_report"
 
+# 6. Title
 st.title("🤖 LLM AutoML Platform")
 
+# 7. Tabs
 tabs = st.tabs([
     "📁 Upload", "📈 Fairness", "📤 Email EDA", "🧠 Fallback",
     "📋 Preview", "🧹 NLP Cleaner"
 ])
 
-# Tab 0: Upload & Train
+# 8. Tab 0: Upload & Train
 with tabs[0]:
     uploaded_file = st.file_uploader("Upload your dataset", type=["csv", "xlsx", "json", "parquet"])
     df_preview = None
@@ -98,7 +102,7 @@ with tabs[0]:
                 except Exception as e:
                     st.error(f"❌ Unexpected error: {e}")
 
-# Tab 1: Fairness Chart
+# 9. Tab 1: Fairness Chart
 with tabs[1]:
     st.header("📊 Fairness Visualizer")
     path = plot_fairness_metrics({
@@ -108,7 +112,7 @@ with tabs[1]:
     })
     st.image(path, caption="Fairness Metrics")
 
-# Tab 2: Email EDA
+# 10. Tab 2: Email EDA
 with tabs[2]:
     st.header("📤 Send EDA Report")
     email = st.text_input("Recipient email:")
@@ -121,7 +125,7 @@ with tabs[2]:
         except Exception as e:
             st.error(f"❌ Email error: {e}")
 
-# Tab 3: LLM Fallback Chat
+# 11. Tab 3: LLM Fallback Chat
 with tabs[3]:
     st.header("🧠 Ask DeepSeek (LLM)")
     prompt = st.text_area("Ask anything:")
@@ -135,26 +139,15 @@ with tabs[3]:
         else:
             st.warning("LLM not set up.")
 
-# Tab 4: Data Preview
+# 12. Tab 4: Data Preview
 with tabs[4]:
     st.header("📋 Data Preview & Insights")
     show_data_preview()
 
-# Tab 5: NLP Cleaner & Profiler with fallback
+# 13. Tab 5: NLP Cleaner & Profiler
 with tabs[5]:
     st.header("🧹 NLP Cleaner & Profiler")
     try:
         run_nlp_cleaner_tab()
-    except requests.exceptions.ConnectionError:
-        st.warning("⚠️ Backend not reachable. Using LLM fallback for NLP Cleaner...")
-        if deepseek_fallback:
-            try:
-                fallback_prompt = "Analyze this sample text data for cleaning suggestions."
-                reply = deepseek_fallback(fallback_prompt)
-                st.markdown(reply)
-            except Exception as e:
-                st.error(f"❌ LLM Fallback failed: {e}")
-        else:
-            st.error("❌ Fallback not available.")
     except Exception as e:
-        st.error(f"❌ Unexpected error in NLP Cleaner: {e}")
+        st.error(f"❌ Error running NLP Cleaner: {e}")
