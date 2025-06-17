@@ -1,5 +1,6 @@
-import os
+import streamlit as st
 st.set_page_config(page_title="LLM AutoML", layout="wide")
+
 import sys
 import streamlit as st
 import pandas as pd
