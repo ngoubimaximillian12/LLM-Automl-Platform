@@ -11,3 +11,4 @@ uvicorn
 pandas
 scikit-learn
 sqlalchemy
+python-dotenv
