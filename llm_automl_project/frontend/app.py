@@ -1,14 +1,9 @@
 import os
+st.set_page_config(page_title="LLM AutoML", layout="wide")
 import sys
 import streamlit as st
 import pandas as pd
 import requests
-
-# 1. Set Streamlit page config first!
-st.set_page_config(page_title="LLM AutoML", layout="wide")
-
-# 2. Import the NLP cleaner tab function
-from nlp_cleaner_tab import run_nlp_cleaner_tab
 
 # 3. Setup backend path for imports if needed
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +37,7 @@ st.title("🤖 LLM AutoML Platform")
 # 7. Tabs
 tabs = st.tabs([
     "📁 Upload", "📈 Fairness", "📤 Email EDA", "🧠 Fallback",
-    "📋 Preview", "🧹 NLP Cleaner"
+    "📋 Preview"
 ])
 
 # 8. Tab 0: Upload & Train
@@ -143,11 +138,3 @@ with tabs[3]:
 with tabs[4]:
     st.header("📋 Data Preview & Insights")
     show_data_preview()
-
-# 13. Tab 5: NLP Cleaner & Profiler
-with tabs[5]:
-    st.header("🧹 NLP Cleaner & Profiler")
-    try:
-        run_nlp_cleaner_tab()
-    except Exception as e:
-        st.error(f"❌ Error running NLP Cleaner: {e}")
