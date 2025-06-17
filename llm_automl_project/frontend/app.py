@@ -1,6 +1,4 @@
 import streamlit as st
-
-# Set Streamlit page config first!
 st.set_page_config(page_title="LLM AutoML", layout="wide")
 
 import os
