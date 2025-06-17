@@ -1,30 +1,27 @@
 import os
 import streamlit as st
 import pandas as pd
-import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 import re
-from transformers import pipeline
-from nltk.tokenize import sent_tokenize
 from better_profanity import profanity
-from langdetect import detect
-from scipy.stats import entropy, kurtosis, skew
-from sklearn.impute import SimpleImputer
+from scipy.stats import skew, kurtosis
 
-# ✅ Load profanity words once
+# Load profanity words once
 profanity.load_censor_words()
 
-# ✅ Optional LLM fallback
 try:
     from backend.llm_generator import deepseek_fallback
-except:
+except ImportError:
     deepseek_fallback = None
+
 
 def run_nlp_cleaner_tab():
     st.subheader("🧹 NLP Data Cleaner, Profiler, and Validator")
 
     DATA_DIR = "data"
+    if not os.path.exists(DATA_DIR):
+        st.warning("No uploaded datasets found.")
+        return
+
     files = [f for f in os.listdir(DATA_DIR) if f.endswith((".csv", ".json", ".xlsx"))]
 
     if not files:
@@ -34,12 +31,13 @@ def run_nlp_cleaner_tab():
     selected_file = st.selectbox("Choose a file", files)
 
     # Load data
+    file_path = os.path.join(DATA_DIR, selected_file)
     if selected_file.endswith(".csv"):
-        df = pd.read_csv(os.path.join(DATA_DIR, selected_file))
+        df = pd.read_csv(file_path)
     elif selected_file.endswith(".xlsx"):
-        df = pd.read_excel(os.path.join(DATA_DIR, selected_file))
+        df = pd.read_excel(file_path)
     elif selected_file.endswith(".json"):
-        df = pd.read_json(os.path.join(DATA_DIR, selected_file))
+        df = pd.read_json(file_path)
     else:
         st.error("Unsupported file format.")
         return
@@ -47,7 +45,7 @@ def run_nlp_cleaner_tab():
     text_cols = df.select_dtypes(include="object").columns.tolist()
     num_cols = df.select_dtypes(include='number').columns.tolist()
 
-    # ---------- Auto Data Profiling ----------
+    # Data Profiling
     st.markdown("### 📊 Data Profiling")
     st.json({
         "Missing Values": int(df.isnull().sum().sum()),
@@ -64,7 +62,7 @@ def run_nlp_cleaner_tab():
             for col in num_cols if df[col].nunique() > 1
         })
 
-    # ---------- Custom Rule Checker ----------
+    # Custom Rule Checker
     st.markdown("### 🧾 Custom Rule Checker")
     rule_warnings = []
 
@@ -79,7 +77,7 @@ def run_nlp_cleaner_tab():
     for msg in rule_warnings:
         st.warning(msg)
 
-    # ---------- LLM Semantic Labeler ----------
+    # LLM Semantic Labeler (optional)
     if deepseek_fallback:
         st.markdown("### 🤖 Column Description via LLM")
         try:
@@ -89,7 +87,7 @@ def run_nlp_cleaner_tab():
         except Exception as e:
             st.error(f"LLM Description failed: {e}")
 
-    # ---------- Text Cleaning ----------
+    # Text Cleaning
     if text_cols:
         st.markdown("## ✨ Text Column Cleaner")
         col = st.selectbox("Text column to clean", text_cols)
