@@ -8,8 +8,6 @@ import sys
 import pandas as pd
 import requests
 
-# Set Streamlit page config first!
-st.set_page_config(page_title="LLM AutoML", layout="wide")
 
 # Detect if running inside Docker (optional, e.g. by env var)
 IN_DOCKER = os.getenv("IN_DOCKER", "0") == "1"
