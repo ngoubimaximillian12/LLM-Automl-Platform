@@ -6,7 +6,7 @@ A full-stack intelligent machine learning platform that:
 - Uses LLMs (GPT/DeepSeek) for reasoning, feedback interpretation, and code generation  
 - Supports continuous learning and explainability through a conversational interface  
 
----
+--
 
 ## 🔍 Motivation
 Machine learning is powerful but often inaccessible due to its complexity. This project aims to **democratize ML** by enabling non-experts to build and monitor **ethical models** with minimal coding. It integrates a fine-tuned LLM, fairness auditing, and feedback-driven retraining.
