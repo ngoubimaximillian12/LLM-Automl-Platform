@@ -1,12 +1,14 @@
-# 🤖 LLM-Powered AutoML Platform with Bias Auditing & Feedback Learning
+# 🤖 LLM-AutoML Platform - Next-Generation AI Development Platform
 
-A full-stack intelligent machine learning platform that:
-- Automates end-to-end model building  
-- Provides real-time bias and fairness auditing  
-- Uses LLMs (GPT/DeepSeek) for reasoning, feedback interpretation, and code generation  
-- Supports continuous learning and explainability through a conversational interface  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 
---
+> **Democratizing AI** - A comprehensive, production-ready platform that enables anyone to build, deploy, and monetize machine learning models with **zero code** required.
+
+---
 
 ## 🔍 Motivation
 Machine learning is powerful but often inaccessible due to its complexity. This project aims to **democratize ML** by enabling non-experts to build and monitor **ethical models** with minimal coding. It integrates a fine-tuned LLM, fairness auditing, and feedback-driven retraining.
